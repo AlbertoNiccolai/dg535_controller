@@ -39,7 +39,7 @@ class MainWindow(QMainWindow): #RIcorda di riaggiungere l'eredità
         print(f"Available devices: {devices}")
 
         # Assuming the DG535 is the only GPIB device connected
-        dg535_address = [device for device in devices if "GPIB" in device][0]
+        self.dg535_address = [device for device in devices if "GPIB" in device][0]
         self.dg535 = self.rm.open_resource(dg535_address)
 
     def setup_ui(self):
@@ -49,38 +49,38 @@ class MainWindow(QMainWindow): #RIcorda di riaggiungere l'eredità
 
         # Connection Layout
         connection_layout = QVBoxLayout()
-        connection_label = QLabel(f"...Connected to DG535...")
+        connection_label = QLabel(f"...Connected to {self.dg535_address}...")
         connection_layout.addWidget(connection_label)
 
         # Settings Layout
         settings_layout = QVBoxLayout()
         settings_label = QLabel("• Current settings:")
-        trigger_label_1 = QLabel(f"     - Trigger mode: {self.trigger_mode}.")
-        trigger_label_2 = QLabel(f"     - Trigger slope: {self.trigger_slope}.")
-        trigger_label_3 = QLabel(f"     - Trigger rate: {self.trigger_rate} Hz.")
+        self.trigger_label_1 = QLabel()
+        self.trigger_label_2 = QLabel()
+        self.trigger_label_3 = QLabel()
         settings_layout.addWidget(settings_label)
-        settings_layout.addWidget(trigger_label_1)
-        settings_layout.addWidget(trigger_label_2)
-        settings_layout.addWidget(trigger_label_3)
+        settings_layout.addWidget(self.trigger_label_1)
+        settings_layout.addWidget(self.trigger_label_2)
+        settings_layout.addWidget(self.trigger_label_3)
 
         # Delays Layout
         delays_layout = QVBoxLayout()
         delays_label = QLabel("• Delays:")
-        delays_label_1 = QLabel(f"      - T0: {self.delay_T0} s")
-        delays_label_2 = QLabel(f"      - A: {self.delay_A} s")
-        delays_label_3 = QLabel(f"      - B: {self.delay_B} s")
-        delays_label_4 = QLabel(f"      - AB: {self.delay_AB} s")
-        delays_label_5 = QLabel(f"      - C: {self.delay_C} s")
-        delays_label_6 = QLabel(f"      - D: {self.delay_D} s")
-        delays_label_7 = QLabel(f"      - CD: {self.delay_CD} s")
+        self.delays_label_1 = QLabel()
+        self.delays_label_2 = QLabel()
+        self.delays_label_3 = QLabel()
+        self.delays_label_4 = QLabel()
+        self.delays_label_5 = QLabel()
+        self.delays_label_6 = QLabel()
+        self.delays_label_7 = QLabel()
         delays_layout.addWidget(delays_label)
-        delays_layout.addWidget(delays_label_1)
-        delays_layout.addWidget(delays_label_2)
-        delays_layout.addWidget(delays_label_3)
-        delays_layout.addWidget(delays_label_4)
-        delays_layout.addWidget(delays_label_5)
-        delays_layout.addWidget(delays_label_6)
-        delays_layout.addWidget(delays_label_7)
+        delays_layout.addWidget(self.delays_label_1)
+        delays_layout.addWidget(self.delays_label_2)
+        delays_layout.addWidget(self.delays_label_3)
+        delays_layout.addWidget(self.delays_label_4)
+        delays_layout.addWidget(self.delays_label_5)
+        delays_layout.addWidget(self.delays_label_6)
+        delays_layout.addWidget(self.delays_label_7)
 
         # Buttons Layout
         pressable_layout = QHBoxLayout()
@@ -183,49 +183,37 @@ class SecondaryWindow(QWidget): #RIcorda di riaggiungere l'eredità
         # Set up the layout for the secondary window
         modify_window_layout = QVBoxLayout()
 
-        # trigger_mode_layout
+        # Trigger mode layout
         trigger_mode_layout = QHBoxLayout()
-        # Add a QLineEdit (text box) to the layout
-        trigger_mode_label = QLabel("- TRIGGER MODE (INT=0, EXT=1, SS=2, BURST=3)")
-        trigger_mode_line = QLineEdit()
-        trigger_mode_line.setPlaceholderText("Enter trigger mode...")
-        # Add the button
+        trigger_mode_label = QLabel("- Trigger mode (INT=0, EXT=1, SS=2, BURST=3)")
+        self.trigger_mode_line = QLineEdit()
+        self.trigger_mode_line.setPlaceholderText("Enter trigger mode...")
         trigger_mode_button = QPushButton("Enter")
         trigger_mode_button.clicked.connect(self.write_on_dg535_tm)
-
-        # Add widget to the layout
         trigger_mode_layout.addWidget(trigger_mode_label)
-        trigger_mode_layout.addWidget(trigger_mode_line)
+        trigger_mode_layout.addWidget(self.trigger_mode_line)
         trigger_mode_layout.addWidget(trigger_mode_button)
 
-        # trigger_rate_layout
+        # Trigger rate layout
         trigger_rate_layout = QHBoxLayout()
-        # Add a QLineEdit (text box) to the layout
-        trigger_rate_label = QLabel("- TRIGGER RATE [Hz]")
-        trigger_rate_line = QLineEdit()
-        trigger_rate_line.setPlaceholderText("Enter trigger rate...")
-        # Add the button
+        trigger_rate_label = QLabel("- Trigger rate [Hz]")
+        self.trigger_rate_line = QLineEdit()
+        self.trigger_rate_line.setPlaceholderText("Enter trigger rate...")
         trigger_rate_button = QPushButton("Enter")
         trigger_rate_button.clicked.connect(self.write_on_dg535_tr)
-
-        # Add widget to the layout
         trigger_rate_layout.addWidget(trigger_rate_label)
-        trigger_rate_layout.addWidget(trigger_rate_line)
+        trigger_rate_layout.addWidget(self.trigger_rate_line)
         trigger_rate_layout.addWidget(trigger_rate_button)
 
-        # trigger_slope_layout
+        # Trigger slope layout
         trigger_slope_layout = QHBoxLayout()
-        # Add a QLineEdit (text box) to the layout
-        trigger_slope_label = QLabel("- TRIGGER SLOPE (FALLING=0, RAISING=1)")
-        trigger_slope_line = QLineEdit()
-        trigger_slope_line.setPlaceholderText("Enter trigger slope...")
-        # Add the button
+        trigger_slope_label = QLabel("- Trigger slope (NEGATIVE=0, POSITIVE=1)")
+        self.trigger_slope_line = QLineEdit()
+        self.trigger_slope_line.setPlaceholderText("Enter trigger slope...")
         trigger_slope_button = QPushButton("Enter")
         trigger_slope_button.clicked.connect(self.write_on_dg535_ts)
-
-        # Add widget to the layout
         trigger_slope_layout.addWidget(trigger_slope_label)
-        trigger_slope_layout.addWidget(trigger_slope_line)
+        trigger_slope_layout.addWidget(self.trigger_slope_line)
         trigger_slope_layout.addWidget(trigger_slope_button)
 
         # Define all the layout for delays
@@ -242,97 +230,86 @@ class SecondaryWindow(QWidget): #RIcorda di riaggiungere l'eredità
         delay_info_label1 = QLabel("To change delay use this notation: i,j")
         delay_info_label2 = QLabel("i = channel to refer for the delay, j = seconds of delay")
 
-        # Labels for channels
-        delay_t0_label = QLabel("Channel T0")
-        delay_a_label = QLabel("Channel A")
-        delay_b_label = QLabel("Channel B")
-        delay_ab_label = QLabel("Channel AB")
-        delay_c_label = QLabel("Channel C")
-        delay_d_label = QLabel("Channel D")
-        delay_cd_label = QLabel("Channel CD")
-
-        delay_t0_line = QLineEdit()
-        delay_a_line = QLineEdit()
-        delay_b_line = QLineEdit()
-        delay_ab_line = QLineEdit()
-        delay_c_line = QLineEdit()
-        delay_d_line = QLineEdit()
-        delay_cd_line = QLineEdit()
-
-        delay_t0_line.setPlaceholderText("Enter command here...")
-        delay_a_line.setPlaceholderText("Enter command here...")
-        delay_b_line.setPlaceholderText("Enter command here...")
-        delay_ab_line.setPlaceholderText("Enter command here...")
-        delay_c_line.setPlaceholderText("Enter command here...")
-        delay_d_line.setPlaceholderText("Enter command here...")
-        delay_cd_line.setPlaceholderText("Enter command here...")
-
-        delay_t0_button = QPushButton("press")
-        delay_a_button = QPushButton("press")
-        delay_b_button = QPushButton("press")
-        delay_ab_button = QPushButton("press")
-        delay_c_button = QPushButton("press")
-        delay_d_button = QPushButton("press")
-        delay_cd_button = QPushButton("press")
-
-        delay_t0_button.clicked.connect(self.write_on_dg535_dtt0)
-        delay_a_button.clicked.connect(self.write_on_dg535_dta)
-        delay_b_button.clicked.connect(self.write_on_dg535_dtb)
-        delay_ab_button.clicked.connect(self.write_on_dg535_dtab)
-        delay_c_button.clicked.connect(self.write_on_dg535_dtc)
-        delay_d_button.clicked.connect(self.write_on_dg535_dtd)
-        delay_cd_button.clicked.connect(self.write_on_dg535_dtcd)
-
+        # Labels and inputs for each delay
+        delay_t0_label = QLabel("T0:")
+        self.delay_t0_line = QLineEdit()
+        self.delay_t0_line.setPlaceholderText("Enter T0 delay...")
+        delay_t0_button = QPushButton("Enter")
+        delay_t0_button.clicked.connect(self.write_on_dg535_t0)
         delay_t0_layout.addWidget(delay_t0_label)
-        delay_t0_layout.addWidget(delay_t0_line)
+        delay_t0_layout.addWidget(self.delay_t0_line)
         delay_t0_layout.addWidget(delay_t0_button)
 
+        delay_a_label = QLabel("A:")
+        self.delay_a_line = QLineEdit()
+        self.delay_a_line.setPlaceholderText("Enter A delay...")
+        delay_a_button = QPushButton("Enter")
+        delay_a_button.clicked.connect(self.write_on_dg535_a)
         delay_a_layout.addWidget(delay_a_label)
-        delay_a_layout.addWidget(delay_a_line)
+        delay_a_layout.addWidget(self.delay_a_line)
         delay_a_layout.addWidget(delay_a_button)
 
+        delay_b_label = QLabel("B:")
+        self.delay_b_line = QLineEdit()
+        self.delay_b_line.setPlaceholderText("Enter B delay...")
+        delay_b_button = QPushButton("Enter")
+        delay_b_button.clicked.connect(self.write_on_dg535_b)
         delay_b_layout.addWidget(delay_b_label)
-        delay_b_layout.addWidget(delay_b_line)
+        delay_b_layout.addWidget(self.delay_b_line)
         delay_b_layout.addWidget(delay_b_button)
 
-        delay_ab_layout.addWidget(delay_ab_label)
-        delay_ab_layout.addWidget(delay_ab_line)
-        delay_ab_layout.addWidget(delay_ab_button)
+        #delay_ab_label = QLabel("AB:")
+        #self.delay_ab_line = QLineEdit()
+        #self.delay_ab_line.setPlaceholderText("Enter AB delay...")
+        #delay_ab_button = QPushButton("Enter")
+        #delay_ab_button.clicked.connect(self.write_on_dg535_ab)
+        #delay_ab_layout.addWidget(delay_ab_label)
+        #delay_ab_layout.addWidget(self.delay_ab_line)
+        #delay_ab_layout.addWidget(delay_ab_button)
 
+        delay_c_label = QLabel("C:")
+        self.delay_c_line = QLineEdit()
+        self.delay_c_line.setPlaceholderText("Enter C delay...")
+        delay_c_button = QPushButton("Enter")
+        delay_c_button.clicked.connect(self.write_on_dg535_c)
         delay_c_layout.addWidget(delay_c_label)
-        delay_c_layout.addWidget(delay_c_line)
+        delay_c_layout.addWidget(self.delay_c_line)
         delay_c_layout.addWidget(delay_c_button)
 
+        delay_d_label = QLabel("D:")
+        self.delay_d_line = QLineEdit()
+        self.delay_d_line.setPlaceholderText("Enter D delay...")
+        delay_d_button = QPushButton("Enter")
+        delay_d_button.clicked.connect(self.write_on_dg535_d)
         delay_d_layout.addWidget(delay_d_label)
-        delay_d_layout.addWidget(delay_d_line)
+        delay_d_layout.addWidget(self.delay_d_line)
         delay_d_layout.addWidget(delay_d_button)
 
-        delay_cd_layout.addWidget(delay_cd_label)
-        delay_cd_layout.addWidget(delay_cd_line)
-        delay_cd_layout.addWidget(delay_cd_button)
+        #delay_cd_label = QLabel("CD:")
+        #self.delay_cd_line = QLineEdit()
+        #self.delay_cd_line.setPlaceholderText("Enter CD delay...")
+        #delay_cd_button = QPushButton("Enter")
+        #delay_cd_button.clicked.connect(self.write_on_dg535_cd)
+        #delay_cd_layout.addWidget(delay_cd_label)
+        #delay_cd_layout.addWidget(self.delay_cd_line)
+        #delay_cd_layout.addWidget(delay_cd_button)
 
-        trigger_layout = QVBoxLayout()
+        # Add the secondary window layouts to the main layout
+        modify_window_layout.addLayout(trigger_mode_layout)
+        modify_window_layout.addLayout(trigger_rate_layout)
+        modify_window_layout.addLayout(trigger_slope_layout)
+        modify_window_layout.addWidget(delay_info_label0)
+        modify_window_layout.addWidget(delay_info_label1)
+        modify_window_layout.addWidget(delay_info_label2)
+        modify_window_layout.addLayout(delay_t0_layout)
+        modify_window_layout.addLayout(delay_a_layout)
+        modify_window_layout.addLayout(delay_b_layout)
+        #modify_window_layout.addLayout(delay_ab_layout)
+        modify_window_layout.addLayout(delay_c_layout)
+        modify_window_layout.addLayout(delay_d_layout)
+        #modify_window_layout.addLayout(delay_cd_layout)
 
-        trigger_layout.addLayout(trigger_mode_layout)
-        trigger_layout.addLayout(trigger_rate_layout)
-        trigger_layout.addLayout(trigger_slope_layout)
-
-        delay_layout = QVBoxLayout()
-
-        delay_layout.addWidget(delay_info_label)
-        delay_layout.addWidget(delay_info_label2)
-
-        delay_layout.addLayout(delay_t0_layout)
-        delay_layout.addLayout(delay_a_layout)
-        delay_layout.addLayout(delay_b_layout)
-        delay_layout.addLayout(delay_ab_layout)
-        delay_layout.addLayout(delay_c_layout)
-        delay_layout.addLayout(delay_d_layout)
-        delay_layout.addLayout(delay_cd_layout)
-
-        modify_window_layout.addLayout(trigger_layout)
-        modify_window_layout.addLayout(delay_layout)
-
+        # Assign the layout to the window
         self.setLayout(modify_window_layout)
 
     def write_on_dg535_tm(self):
@@ -361,9 +338,9 @@ class SecondaryWindow(QWidget): #RIcorda di riaggiungere l'eredità
         # Write the code in the machine and execute it
         self.dg535.write(f"DT 3,{delay_b_line}")
 
-    def write_on_dg535_dtab(self):
-        # Write the code in the machine and execute it
-        self.dg535.write(f"DT 4,{delay_ab_line}")
+    #def write_on_dg535_dtab(self):
+    #    # Write the code in the machine and execute it
+    #    self.dg535.write(f"DT 4,{delay_ab_line}")
 
     def write_on_dg535_dtc(self):
         # Write the code in the machine and execute it
@@ -373,9 +350,9 @@ class SecondaryWindow(QWidget): #RIcorda di riaggiungere l'eredità
         # Write the code in the machine and execute it
         self.dg535.write(f"DT 6,{delay_d_line}")
 
-    def write_on_dg535_dtcd(self):
-        # Write the code in the machine and execute it
-        self.dg535.write(f"DT 7,{delay_cd_line}")
+    #def write_on_dg535_dtcd(self):
+    #    # Write the code in the machine and execute it
+    #    self.dg535.write(f"DT 7,{delay_cd_line}")
 
 
 def main():
