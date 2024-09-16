@@ -44,7 +44,7 @@ help_menu.add_command(label="Help", command=show_help)
 
 
 #set size
-window.geometry("300x150")
+window.geometry("600x300")
 
 #button to run simple interface
 button_a = tk.Button(window, text="Run simplified interface", command=run_script_a)

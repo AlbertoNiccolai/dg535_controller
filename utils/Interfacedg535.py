@@ -10,8 +10,33 @@ import numpy as np
 
 
 
+def show_help_delay_channels():
+    messagebox.showinfo("Help - Delay Channels", "This section allows you to set the delay for different channels (A, B, C, D).")
 
 
+def show_help_plot():
+    help_message = (
+                   "This section displays two plot:\n"
+                   "1) Shows the delays of the 4 channels relative to a common internal time reference T0\n"
+                   "2) Shows the duration of the AB and CD channel pulses\n")
+    messagebox.showinfo("Help - Plot", help_message)
+
+
+def show_help_set_frequency():
+    messagebox.showinfo("Help - Set Frequency", "This section allows you to set the frequency in Hz, please specify a positive numerical value in Hz. This option won't affect the settled delays .")
+
+def show_help_start():
+    help_message = (
+                        "This section starts the pulse generator at the given internal frequency and at the following default delays for the channel:\n\n"
+                        "Channel A: 100 ns\n"                  
+                        "Channel B: 200 ns\n"
+                        "Channel C: 250 microseconds\n"
+                        "Channel D: 251 microseconds\n"
+                        "If no frequency is specified, then a default value of 2kHz is settled.\n"  
+                        "Please fine tune the delays in case those values must be changed.\n"             
+                            )
+    messagebox.showinfo("Help - Start and Stop Section" , help_message
+                            )
 
 def update_connection_status():
     """
@@ -474,7 +499,7 @@ def update_graph(scale_type="linear"):
     ax[1].set_xscale(scale_type)
     ax[1].grid(True, which='both', linestyle='--', linewidth=0.5)
     
-
+    
     
     
     
@@ -549,6 +574,12 @@ frame_start_stop.pack(anchor='w', padx=20, pady=20, fill="both", expand="no")
 frame_start = tk.Frame(frame_start_stop, bg=section_bg)
 frame_start.pack(anchor='w', pady=10)
 
+#help button for start section
+button_help_start = tk.Button(frame_start, text="?", command=show_help_start, width=2)
+button_help_start.pack(side = tk.RIGHT, padx=5, pady=5)
+
+
+
 label_start = tk.Label(frame_start, text="Initial internal trigger frequency", bg=section_bg)
 label_start.pack(side=tk.LEFT, padx=5)
 
@@ -576,6 +607,10 @@ trigger_label.pack(side = tk.RIGHT, padx = 20)
 # Set internal trigger frequency section
 frame_set_internal = tk.LabelFrame(window, text="SET INTERNAL TRIGGER FREQUENCY", padx=20, pady=20, bg=section_bg,font=title_font, borderwidth=2, relief="groove")
 frame_set_internal.pack(anchor='w', padx=20, pady=20, fill="both", expand="no")
+
+#help button for frequency section
+button_help_freq = tk.Button(frame_set_internal, text="?", command=show_help_set_frequency, width=2)
+button_help_freq.pack(side=tk.RIGHT, padx=5, pady=5)
 
 
 label_trigger = tk.Label(frame_set_internal, text="Change internal trigger frequency", bg=section_bg)
@@ -617,6 +652,12 @@ label_frequency.pack(pady=10)
 # Frame for DELAY CHANNELS section
 frame_delay = tk.LabelFrame(window, text="DELAY CHANNELS", padx=20, pady=20, bg=section_bg, font=title_font, borderwidth=2, relief="groove")
 frame_delay.pack(pady=10, fill="x", padx=20, anchor='w', expand="no")
+
+# Pulsante Help per la sezione "Delay Channels"
+button_help_delay = tk.Button(frame_delay, text="?", command=show_help_delay_channels, width=2)
+button_help_delay.grid(row=0, column=16, padx=5, pady=5 , sticky = 'w')
+
+
 
 # Row 0: Delay Channel A
 label_delay_Channel_A = tk.Label(frame_delay, text="Delay Channel A", bg=section_bg)
@@ -707,9 +748,15 @@ label_delay_D.grid(row=1, column = 11, padx = 10, pady = 5, sticky="e")
 frame_plot = tk.Frame(window)
 frame_plot.pack(fill=tk.BOTH, expand="yes", pady = 10, padx = 10)
 
+
+
+
 # Buttons for updating the graph
 frame_buttons = tk.Frame(window, padx = 10, pady = 10)
 frame_buttons.pack(side=tk.TOP, pady=10)
+
+
+
 
 # Dropdown for scale selection
 scale_type = tk.StringVar(value="linear")
@@ -724,6 +771,10 @@ scale_dropdown.bind("<<ComboboxSelected>>", on_scale_change)
 # Button to update graph
 button_update_graph = tk.Button(frame_buttons, text="Update Graph", command=lambda: update_graph(scale_type.get()))
 button_update_graph.grid(row=0, column=1, padx=5)
+
+#help button for start section
+button_help_plot = tk.Button(frame_buttons, text="?", command=show_help_plot, width=2)
+button_help_plot.grid(row=0, column=2, padx=5, pady=5 , sticky = 'w')
 
 
 
