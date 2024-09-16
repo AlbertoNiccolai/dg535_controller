@@ -527,7 +527,7 @@ title_font = ('Serif', 12, 'bold')
 
 
 
-# First section: retry connection
+# First section: retry connection and also ifo
 frame_retry = tk.LabelFrame(window, text = "CONNECTION SECTION", padx=20, pady=20, bg=section_bg, font=title_font, borderwidth=2, relief="groove")
 frame_retry.pack(anchor='c', padx=20, pady=20)
 
