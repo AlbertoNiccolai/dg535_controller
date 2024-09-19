@@ -94,8 +94,8 @@ def connect_to_dg535():
     global dg535
 
     dg535 = rm.open_resource(dg535_address)
-    update_values_fasullo(dg535)
-    #update_values(dg535)
+    #update_values_fasullo(dg535)
+    update_values(dg535)
     update_mode_status()
     return dg535
 
@@ -783,7 +783,8 @@ button_help_plot.grid(row=0, column=2, padx=5, pady=5 , sticky = 'w')
 dg535 = connect_to_dg535()
 update_connection_status()
 update_mode_status()
-update_values_fasullo()
+update_values()
+#update_values_fasullo()
 
 # Initial plot
 update_graph()
