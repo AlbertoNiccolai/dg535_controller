@@ -8,8 +8,6 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import numpy as np
 
 
-
-
 def show_help_delay_channels():
     messagebox.showinfo("Help - Delay Channels", "This section allows you to set the delay for different channels (A, B, C, D).")
 
@@ -28,15 +26,22 @@ def show_help_set_frequency():
 def show_help_start():
     help_message = (
                         "This section starts the pulse generator at the given internal frequency and at the following default delays for the channel:\n\n"
-                        "Channel A: 100 ns\n"                  
-                        "Channel B: 200 ns\n"
+                        "Channel A: 0 ns\n"                  
+                        "Channel B: 5 microsecondss\n"
                         "Channel C: 250 microseconds\n"
                         "Channel D: 251 microseconds\n"
-                        "If no frequency is specified, then a default value of 2kHz is settled.\n"  
-                        "Please fine tune the delays in case those values must be changed.\n"             
+                        "If no frequency is specified, then a default value of 10 Hz is settled.\n"  
+                        "Please fine tune the delays in case those values must be changed.\n"    
+                        "Do not attempt to increase the frequency over 100 Hz, bad things might happen (i will not allow you... )"
                             )
     messagebox.showinfo("Help - Start and Stop Section" , help_message
                             )
+
+    
+    
+
+
+
 
 def update_connection_status():
     """
@@ -62,8 +67,7 @@ def update_mode_status():
         return -1
 
     status = dg535.query("TM")
-    logger.info(status)
-    if status == "INT": #Check
+    if status[0] == "0": #Check
         trigger_label.config(text = "Trigger Status: Internal Trigger On", bg = "green", fg = "white")
     else:
         trigger_label.config(text = "Trigger Status: Internal Trigger Off", bg = "red", fg = "white")
@@ -95,8 +99,8 @@ def connect_to_dg535():
 
     dg535 = rm.open_resource(dg535_address)
     #update_values_fasullo(dg535)
-    update_values(dg535)
-    update_mode_status()
+    #update_values(dg535)
+    #update_mode_status()
     return dg535
 
 
@@ -107,11 +111,20 @@ def update_values(dg535):
     Function to update internal tigger frequency and C Channel delay values.
     """
     f = dg535.query("TR 0")
+    f = float(f[:len(f)-2])
+    
     t_A = dg535.query("DT 2")
+    t_A = float(t_A[2:len(t_A)-2])
     t_B = dg535.query("DT 3")
+    t_B = float(t_B[2:len(t_B)-2])
+
     t_C = dg535.query("DT 5")
+    t_C = float(t_C[2:len(t_C)-2])
+
     t_D = dg535.query("DT 6")
-    t_AB = dg535.query("DT 4")
+    t_D = float(t_D[2:len(t_D)-2])
+
+    
     global frequency_var
     global delay_var_A
     global delay_var_B
@@ -131,40 +144,9 @@ def update_values(dg535):
         list_current_delays[i].set(f'{list_var2[i]}')
         
     frequency_var.set(f"Internal Trigger frequency set to: {f} [Hz]")
+    update_graph()
 
 
-
-
-
-def update_values_fasullo():
-    """
-    """
-    f = 1
-    t_A = 1e-7 
-    t_B = 2e-7
-    t_C = 2.5e-6
-    t_D = 2.51e-6
-    t_AB = t_A
-    global frequency_var
-    global delay_var_A
-    global delay_var_B
-    global delay_var_C
-    global delay_var_D
-    global current_delay_var_A
-    global current_delay_var_B
-    global current_delay_var_C
-    global current_delay_var_D
-    
-    list_delay_var = [delay_var_A,delay_var_B,delay_var_C,delay_var_D]
-    list_var2 =  [t_A, t_B, t_C, t_D]
-    list_current_delays = [current_delay_var_A,current_delay_var_B,current_delay_var_C,current_delay_var_D]
-    channels = ["A", "B", "C", "D"]
-    
-    for i, delay in enumerate(list_delay_var):
-        delay.set(f"Channel {channels[i]} delay set to : {list_var2[i]} [s]")
-        list_current_delays[i].set(f'{list_var2[i]}')
-    frequency_var.set(f"Internal Trigger frequency set to: {f} [Hz]")
-    
 
 def retry_connection():
     """
@@ -180,6 +162,8 @@ def retry_connection():
         messagebox.showwarning("Connection Failed", "Retry connection failed. Please check the device and try again.")
     update_connection_status()
     update_mode_status()
+    update_graph()
+
 
 def stop(dg535):
     
@@ -212,13 +196,13 @@ def start(dg535, f):
     """
     messagebox.showinfo("Starting the pulse generator", "Attempting to start the pulse generator...\n channel A delay channel is set to default 100 [ns], channel B delay is set to  default of 200 [ns]\n channel C delay is set to default of 250 microseconds \n channel D delay is set to default of 251 microseconds.")
     # delay A from T0 of 100 ns
-    dg535.write('DL 2,1,1E-7')
+    dg535.write('DT 2,1,0.0')
     # delay B from A 100 ns
-    dg535.write('DL 3,2,1E-7')
+    dg535.write('DT 3,1,5E-6')
     # delay C 250 microseconds compared to T0
-    dg535.write('DL 5,1,0.00025')
+    dg535.write('DT 5,1,200E-6')
     #delay D 251 microseconds compared to T0
-    dg535.write('DL 6,1,0.000251')
+    dg535.write('DT 6,1,251E-6')
     # change frequency and set trigger to internal
     change_frequency(dg535, f)
     dg535.write('TM 0')
@@ -259,7 +243,6 @@ def check_delay(t, Channel):
                          5:6
                         
                         }
-    placeholder_var = t
     if (Channel != 2):
         if  t < dict_var[dict_check_backward[Channel]]:
             messagebox.showwarning("Warning", f"Channel {dict_name[Channel]} delay is less than channel {dict_name[dict_check_backward[Channel]]} delay.\n Remember that the delays are ordered in A->B->C->D")
@@ -280,11 +263,12 @@ def delay(dg535,Channel,  t):
     flag = check_delay(t, Channel)
     if flag == -1:
         return -1
-    command = f'DL {Channel},1,{t}'
-    
+    command = f'DT {Channel},1,{t}'
     
     dg535.write(command)
     update_values(dg535)
+    update_graph()
+
 
 
 
@@ -329,8 +313,12 @@ def set_trigger_frequency():
         if frequency <= 0:
             messagebox.showwarning("Error", "Please insert a non-negative value")
             return -1
+        if frequency >100:
+            messagebox.showerror("Bruh", " Y burn transstor_? <100 Hz pls")
+            return -1
         if frequency:
             change_frequency(dg535, frequency)
+            update_graph()
             messagebox.showinfo("Impostato", f"Internal Trigger frequency set to: {frequency} Hz")
         else:
             messagebox.showwarning("Warning", "Please insert a valid frequency!")
@@ -357,8 +345,8 @@ def start_action():
         start(dg535, initial_frequency)
         messagebox.showinfo("Starting", f"Internal trigger frequency set to: {initial_frequency} Hz")
     else:
-        start(dg535, 2000)
-        messgaebox.showninfo("Starting", f"Internal trigger frequency set to a default value of 2000 Hz since no value was specified")
+        start(dg535, 10)
+        messagebox.showinfo("Starting", f"Internal trigger frequency set to a default value of 2000 Hz since no value was specified")
 
 # stop function
 def stop_action():
@@ -386,8 +374,7 @@ def set_delay(Channel, t):
                 3:float(current_delay_var_B.get()),
 
                 5:float(current_delay_var_C.get()),
-                6:float(current_delay_var_D.get())
-                
+                6:float(current_delay_var_D.get()) 
            }
            
     dict_check_backward = {3:2,
@@ -407,9 +394,6 @@ def set_delay(Channel, t):
     if not dg535:
         messagebox.showwarning("Error", "There is no GPIB device, please check the connection.")
         return -1
-        
-             
-
     
     if t:
         try:
@@ -417,9 +401,10 @@ def set_delay(Channel, t):
         except:
             messagebox.showwarning("Error", "Please insert a valid value")
             return -1
-        if  t <= 0:
+        if  t < 0:
             messagebox.showwarning("Error", "Please insert a non-negative value")
             return -1
+        else:
             if (Channel!=2):
                 if  t < dict_var[dict_check_backward[Channel]]:
                     messagebox.showwarning("Warning", f"Channel {dict_name[Channel]} delay is less than channel {dict_name[dict_check_backward[Channel]]} delay.\n Remember that the delays must be ordered such that A<B<C<D")
@@ -428,8 +413,8 @@ def set_delay(Channel, t):
                 if  t > dict_var[dict_check_forward[Channel]]:
                     messagebox.showwarning("Warning", f"Channel {dict_name[Channel]} delay is more than channel {dict_name[dict_check_forward[Channel]]} delay.\n Remember that the delays must be ordered such that A<B<C<D")
                     return -1
-            delay(dg535,Channel,  t)
-            messagebox.showinfo("Delay settled", f"Delay settled to: {delay} seconds for channel {Channel}")
+            delay(dg535,Channel,t)
+            messagebox.showinfo("Delay settled", f"Delay settled to: {t} seconds for channel {dict_name[Channel]}")
     else:
         messagebox.showwarning("Error", "No value was inserted")
 
@@ -486,9 +471,7 @@ def update_graph(scale_type="linear"):
     end_pos = [AB_pulse_end-AB_pulse_start, CD_pulse_end-CD_pulse_start]
     start_pos = [AB_pulse_start, CD_pulse_start]
     
-    #start_pos = [0,0]
-    print(end_pos)
-    print(start_pos)
+    
     colors_pulses = ['cyan', 'purple']
     # Horizontal bar plot for the second subplot
     bars = ax[1].barh(pulse_channels, end_pos, color=colors_pulses, edgecolor='black', left=start_pos)
@@ -499,7 +482,7 @@ def update_graph(scale_type="linear"):
     ax[1].set_xscale(scale_type)
     ax[1].grid(True, which='both', linestyle='--', linewidth=0.5)
     
-    
+
     
     
     
@@ -574,9 +557,12 @@ frame_start_stop.pack(anchor='w', padx=20, pady=20, fill="both", expand="no")
 frame_start = tk.Frame(frame_start_stop, bg=section_bg)
 frame_start.pack(anchor='w', pady=10)
 
+
 #help button for start section
 button_help_start = tk.Button(frame_start, text="?", command=show_help_start, width=2)
 button_help_start.pack(side = tk.RIGHT, padx=5, pady=5)
+
+
 
 
 
@@ -607,7 +593,6 @@ trigger_label.pack(side = tk.RIGHT, padx = 20)
 # Set internal trigger frequency section
 frame_set_internal = tk.LabelFrame(window, text="SET INTERNAL TRIGGER FREQUENCY", padx=20, pady=20, bg=section_bg,font=title_font, borderwidth=2, relief="groove")
 frame_set_internal.pack(anchor='w', padx=20, pady=20, fill="both", expand="no")
-
 #help button for frequency section
 button_help_freq = tk.Button(frame_set_internal, text="?", command=show_help_set_frequency, width=2)
 button_help_freq.pack(side=tk.RIGHT, padx=5, pady=5)
@@ -653,9 +638,12 @@ label_frequency.pack(pady=10)
 frame_delay = tk.LabelFrame(window, text="DELAY CHANNELS", padx=20, pady=20, bg=section_bg, font=title_font, borderwidth=2, relief="groove")
 frame_delay.pack(pady=10, fill="x", padx=20, anchor='w', expand="no")
 
+
 # Pulsante Help per la sezione "Delay Channels"
 button_help_delay = tk.Button(frame_delay, text="?", command=show_help_delay_channels, width=2)
 button_help_delay.grid(row=0, column=16, padx=5, pady=5 , sticky = 'w')
+
+
 
 
 
@@ -669,7 +657,7 @@ entry_delay_Channel_A.grid(row=0, column=1, padx=5, pady=5)
 label_seconds_Channel_A = tk.Label(frame_delay, text="[s]", bg=section_bg)
 label_seconds_Channel_A.grid(row=0, column=2, padx=5, pady=5)
 
-button_set_delay_Channel_A = tk.Button(frame_delay, text="Set", command=lambda: set_delay(2, entry_delay_Channel_D.get()))
+button_set_delay_Channel_A = tk.Button(frame_delay, text="Set", command=lambda: set_delay(2, entry_delay_Channel_A.get()))
 button_set_delay_Channel_A.grid(row=0, column=3, padx=10, pady=5)
 
 current_delay_var_A = tk.StringVar()
@@ -689,7 +677,7 @@ entry_delay_Channel_B.grid(row=1, column=1, padx=5, pady=5)
 label_seconds_Channel_B = tk.Label(frame_delay, text="[s]", bg=section_bg)
 label_seconds_Channel_B.grid(row=1, column=2, padx=5, pady=5)
 
-button_set_delay_Channel_B = tk.Button(frame_delay, text="Set", command=lambda: set_delay(3, entry_delay_Channel_D.get()))
+button_set_delay_Channel_B = tk.Button(frame_delay, text="Set", command=lambda: set_delay(3, entry_delay_Channel_B.get()))
 button_set_delay_Channel_B.grid(row=1, column=3, padx=10, pady=5)
 
 current_delay_var_B = tk.StringVar()
@@ -712,7 +700,7 @@ entry_delay_Channel_C.grid(row=0, column=8, padx=5, pady=5, sticky="e")
 label_seconds_Channel_C = tk.Label(frame_delay, text="[s]", bg=section_bg)
 label_seconds_Channel_C.grid(row=0, column=9, padx=5, pady=5, sticky="e")
 
-button_set_delay_Channel_C = tk.Button(frame_delay, text="Set", command=lambda: set_delay(5, entry_delay_Channel_D.get()))
+button_set_delay_Channel_C = tk.Button(frame_delay, text="Set", command=lambda: set_delay(5, entry_delay_Channel_C.get()))
 button_set_delay_Channel_C.grid(row=0, column=10, padx=10, pady=5, sticky="e")
 
 # Row 3: Delay Channel D
@@ -753,7 +741,7 @@ frame_plot.pack(fill=tk.BOTH, expand="yes", pady = 10, padx = 10)
 
 # Buttons for updating the graph
 frame_buttons = tk.Frame(window, padx = 10, pady = 10)
-frame_buttons.pack(side=tk.TOP, pady=10)
+frame_buttons.pack(side=tk.TOP, pady=10, anchor = 'w', expand = 'yes')
 
 
 
@@ -778,19 +766,15 @@ button_help_plot.grid(row=0, column=2, padx=5, pady=5 , sticky = 'w')
 
 
 
-
 # First connection to device.
 dg535 = connect_to_dg535()
 update_connection_status()
 update_mode_status()
-update_values()
-#update_values_fasullo()
+update_values(dg535)
 
 # Initial plot
 update_graph()
 
-
-delay(None, 2, 10)
 
 
 
