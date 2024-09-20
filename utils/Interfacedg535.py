@@ -6,8 +6,8 @@ from loguru import logger
 from matplotlib import pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import numpy as np
-
-
+import ttkbootstrap as ttkb
+from threading import Thread
 def show_help_delay_channels():
     messagebox.showinfo("Help - Delay Channels", "This section allows you to set the delay for different channels (A, B, C, D).")
 
@@ -71,7 +71,32 @@ def update_mode_status():
         trigger_label.config(text = "Trigger Status: Internal Trigger On", bg = "green", fg = "white")
     else:
         trigger_label.config(text = "Trigger Status: Internal Trigger Off", bg = "red", fg = "white")
+    
         
+    
+def check_connection():
+    global dg535
+    global rm
+    devices = rm.list_resources()
+    # Check if any GPIB devices are connected
+    gpib_devices = [device for device in devices if "GPIB" in device]
+    if not gpib_devices:
+        messagebox.showwarning("Warning", "There are no GPIB devices connected! Please check the connection again!")
+    try:
+        dg535.query("TM")
+    except:
+        messagebox.showwarning("Error","Connection could have been lost with the device: please check the physical connection. Use the third party driver to re-establish connnection.")
+        dg535 = None
+        update_connection_status()
+        update_mode_status()
+    
+    
+def loop_check():
+    global dg535
+    global rm
+    
+    check_connection()
+    window.after(10000, loop_check())
 
 def list_devices():
     devices = pyvisa.ResourceManager().list_resources()
@@ -84,6 +109,9 @@ def connect_to_dg535():
     in case there is more than one device connected please specify the right item from the list that will be returned in this case
     """
     # Initialize VISA resource manager
+    global rm
+    global dg535
+
     rm = pyvisa.ResourceManager()
     # List all available devices
     devices = rm.list_resources()
@@ -95,9 +123,11 @@ def connect_to_dg535():
         return None  # Return None to indicate connection failure
     dg535_address = gpib_devices[0]        
     # Connect to the DG535
-    global dg535
-
-    dg535 = rm.open_resource(dg535_address)
+    try:
+        dg535 = rm.open_resource(dg535_address)
+    except:
+        messagebox.showwarning("Error","Connection could have been lost with the device: please check the physical connection. Use the third party driver to re-establish connnection.")
+        dg535 = None
     #update_values_fasullo(dg535)
     #update_values(dg535)
     #update_mode_status()
@@ -110,6 +140,9 @@ def update_values(dg535):
     """
     Function to update internal tigger frequency and C Channel delay values.
     """
+    check_connection()
+    if not dg535:
+        return -1
     f = dg535.query("TR 0")
     f = float(f[:len(f)-2])
     
@@ -183,6 +216,7 @@ def change_frequency(dg535, f):
     @params f : the new frequency in Hz
     This function changes the internal trigger frequency of the device. 
     """
+    check_connection()
     messagebox.showwarning("Warning", f"The frequency of the internal trigger is being changed to {f} Hz, you may need to change the delays to the channels if needed. ")
     commandstring = f'TR 0,{f}'
     dg535.write(commandstring)
@@ -195,6 +229,7 @@ def start(dg535, f):
     @params f : the frequency to set, to be specified in Hz
     """
     messagebox.showinfo("Starting the pulse generator", "Attempting to start the pulse generator...\n channel A delay channel is set to default 100 [ns], channel B delay is set to  default of 200 [ns]\n channel C delay is set to default of 250 microseconds \n channel D delay is set to default of 251 microseconds.")
+
     # delay A from T0 of 100 ns
     dg535.write('DT 2,1,0.0')
     # delay B from A 100 ns
@@ -300,6 +335,8 @@ def set_trigger_frequency():
     """
         Function that activates when the Set Frequency button is pressed
     """
+    check_connection()
+
     if not dg535:
         messagebox.showwarning("Error", "There is no GPIB device, please check the connection.")
         return -1
@@ -331,10 +368,12 @@ def start_action():
     """
     Function that activates when the start button is pressed
     """
+    check_connection()
+
     if not dg535:
         messagebox.showwarning("Error", "There is no GPIB device, please check the connection.")
         return -1
-    
+
         
     if entry_start.get():
         try:
@@ -346,13 +385,15 @@ def start_action():
         messagebox.showinfo("Starting", f"Internal trigger frequency set to: {initial_frequency} Hz")
     else:
         start(dg535, 10)
-        messagebox.showinfo("Starting", f"Internal trigger frequency set to a default value of 2000 Hz since no value was specified")
+        messagebox.showinfo("Starting", f"Internal trigger frequency set to a default value of 10 Hz since no value was specified")
 
 # stop function
 def stop_action():
     """
     Function that activates when the stop button is pressed
     """
+    check_connection()
+
     if not dg535:
         messagebox.showwarning("Error", "There is no GPIB device, please check the connection.")
         return -1
@@ -364,6 +405,10 @@ def set_delay(Channel, t):
     """
     Function that activates when the set delay button is pressed
     """
+    check_connection()
+    if not dg535:
+        messagebox.showwarning("Error", "There is no GPIB device, please check the connection.")
+        return -1   
     global current_delay_var_A
     global current_delay_var_B
 
@@ -424,6 +469,11 @@ def set_delay(Channel, t):
 
 
 def update_graph(scale_type="linear"):
+    
+    check_connection()
+    if not dg535:
+        return -1
+    
     delays = {
         'T0 time reference' : 0, 
         'Channel A': float(current_delay_var_A.get()) or 0,
@@ -775,9 +825,14 @@ update_values(dg535)
 # Initial plot
 update_graph()
 
-
-
+"""
+thread1 = Thread(target =loop_check())
 
 # Interface loop
+thread2 = Thread(target = window.mainloop())
+thread1.start()
+thread2.start()
+thread1.join()
+"""
 window.mainloop()
 
